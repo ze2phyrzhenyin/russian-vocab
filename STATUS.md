@@ -5,7 +5,7 @@
 ## Runtime and access
 
 - Public: https://slovo.zhaoyang.fr
-- Private GitHub: https://github.com/ze2phyrzhenyin/russian-vocab
+- Public GitHub: https://github.com/ze2phyrzhenyin/russian-vocab; original code and documentation are MIT-licensed. The user explicitly requested public open source and selected MIT on 2026-10-24. Third-party notices remain in force; textbooks, extracted content, user data and credentials remain private.
 - Canonical server: rex-cli:/home/adminlinux/Developer/russian-vocab; local workspace /Users/zephyrsui/Developer/russian-vocab.
 - Independent production PostgreSQL `slovo` and `slovo-production` Compose; APP_ENV=production, DEMO_MODE=false. Fixed demo accounts are not created in production.
 - Public test-account credentials are private `.local/production-test-access.md`; administrator handoff is `.local/rex-cli-production-admin-access.md` locally and `.local/production-admin-access.md` on rex-cli. Never commit these files.

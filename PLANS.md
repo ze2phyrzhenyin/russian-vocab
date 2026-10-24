@@ -9,7 +9,7 @@ Each checkpoint must run with real authentication and database state before cont
 5. Checkpoint C: account-isolated Dexie caches/outbox, explicit lesson downloads, deterministic transactional synchronization/conflict states, administrator revisions and access tests.
 6. Run lint/type/domain/database/browser/build gates, mobile screenshots (360/390/430), offline 10-event test, source coverage checks and isolated rex-cli demo smoke. Write accurate handoff and remaining full-product milestones.
 
-Follow-on product milestones: complete detailed annotation enrichment/review across all applicable fields; advanced grammar/listening/spelling exercises; additional content/provider infrastructure only when needed; physical device acceptance when hardware is available. Production on slovo.zhaoyang.fr and private GitHub publication were explicitly authorized on 2026-10-24.
+Follow-on product milestones: complete detailed annotation enrichment/review across all applicable fields; advanced grammar/listening/spelling exercises; additional content/provider infrastructure only when needed; physical device acceptance when hardware is available. Production on slovo.zhaoyang.fr and GitHub publication were explicitly authorized on 2026-10-24; the user subsequently requested a public open-source repository and selected MIT.
 
 ## Delivered gates (2026-10-24)
 
@@ -29,6 +29,6 @@ Implemented: all 4,835 entries have 32 provenance/state fields; persisted jobs w
 
 Real PostgreSQL tests cover job leasing, strict idempotency, concurrent external writers, and source-import/reviewer locking. Workbench browser acceptance covers actual approval/rejection/restoration and batch cancellation/resume. Global engineering and public gates are recorded in STATUS.md and docs/DELIVERY.md.
 
-Public application: https://slovo.zhaoyang.fr; private repo ze2phyrzhenyin/russian-vocab. Production has independent data and no fixed demo accounts. The user explicitly says no physical phone is currently available; do not claim physical-device acceptance.
+Public application: https://slovo.zhaoyang.fr; public MIT-licensed repo ze2phyrzhenyin/russian-vocab. Production has independent private data and no fixed demo accounts. The user explicitly says no physical phone is currently available; do not claim physical-device acceptance.
 
 Remaining content work is to obtain reliable evidence for still-unknown fields and have actual reviewers validate drafts. Automatic candidate coverage is not full human review. Cloud provider activation, spelling/listening/grammar exercise families and cross-source lexical identity remain separate product extensions.

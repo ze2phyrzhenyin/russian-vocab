@@ -1,6 +1,6 @@
 # 2026-10-24 公网与全词库工作流交付
 
-由 Codex 完成实现、修复、测试和部署。正式入口 https://slovo.zhaoyang.fr，私有 GitHub https://github.com/ze2phyrzhenyin/russian-vocab。教材原文件、派生数据、截图与凭据均不提交 Git。
+由 Codex 完成实现、修复、测试和部署。正式入口 https://slovo.zhaoyang.fr，公开 GitHub https://github.com/ze2phyrzhenyin/russian-vocab，原创程序及文档采用 MIT 许可证。教材原文件、派生数据、截图与凭据均不提交 Git。
 
 ## 访问与运行
 

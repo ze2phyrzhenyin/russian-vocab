@@ -3,7 +3,7 @@
 用户于 2026-10-24 授权提交 GitHub、部署，并指定 zhaoyang.fr 域名及正常体验账号。
 
 - 正式入口：https://slovo.zhaoyang.fr
-- 私有仓库：https://github.com/ze2phyrzhenyin/russian-vocab
+- 公开开源仓库：https://github.com/ze2phyrzhenyin/russian-vocab（原创程序及文档采用 MIT；部署数据与凭据保持私有）
 - 应用/数据库：rex-cli，项目 `/home/adminlinux/Developer/russian-vocab`
 - HTTPS 入口：rex-ovh Nginx；只新增独立主机，不接管 zhaoyang.fr 其他路径。
 - 链路：Nginx → OVH `127.0.0.1:58092` → 独立 `slovo-ingress.service` → rex-cli `127.0.0.1:4188`。

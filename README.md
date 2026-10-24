@@ -4,14 +4,21 @@
 
 支持真实账号、跨册选课、双向选择与翻卡、错词再练、FSRS 复习、个人集合、手动批量录入、真实本地 OCR、原图追溯、下载课次、离线 outbox 和管理员修订。新增持久批量注解任务、按册/课/词性覆盖报告、逐字段确认/驳回和带审计的历史回滚。验证状态以 [STATUS.md](STATUS.md) 为准。
 
-正式入口：<https://slovo.zhaoyang.fr>。私有代码仓库：<https://github.com/ze2phyrzhenyin/russian-vocab>。公网版使用独立正式数据库，关闭固定演示入口；请注册个人账号或使用私下交付的体验账号。部署说明见 [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)。
+正式入口：<https://slovo.zhaoyang.fr>。公开开源仓库：<https://github.com/ze2phyrzhenyin/russian-vocab>，采用 [MIT 许可证](LICENSE)。公网版使用独立正式数据库，关闭固定演示入口；请注册个人账号或使用私下交付的体验账号。部署说明见 [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)。
+
+## 开源许可与数据范围
+
+本项目原创程序和文档采用 MIT 许可证，允许使用、修改、分发与商用，须保留版权与许可声明。第三方程序、字典数据和 OCR 模型沿用各自许可，详见 [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) 与 [docs/licenses/](docs/licenses/)。
+
+仓库提供应用源码、数据库迁移、合成测试夹具和部署示例。教材工作簿、扫描图片、提取词库、用户数据与凭据不随源码发布，也不由本项目 MIT 许可证授权。上文的导入数量是私有部署的验收结果；运行完整教材流程需自行提供有权使用的资料。
 
 ## 安装与启动
 
 需要 Node.js 24、pnpm 11.24.0、Python 3.11+（带 venv/pip，或已有 uv），Compose 路径另需 Docker。教材文件由有权使用者自行提供，不随 Git 发布。
 
 ```sh
-cd /Users/zephyrsui/Developer/russian-vocab
+git clone https://github.com/ze2phyrzhenyin/russian-vocab.git
+cd russian-vocab
 dev-run pnpm install --frozen-lockfile
 # 将用户提供的工作簿放到 data/source/，或设置 VOCAB_SOURCE_PATH。
 dev-run pnpm run setup --compose-db
