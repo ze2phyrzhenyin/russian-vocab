@@ -1,0 +1,308 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id            String            @id
+  name          String
+  email         String            @unique
+  emailVerified Boolean           @default(false)
+  image         String?
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+  role          String            @default("user")
+  timeZone      String            @default("Asia/Shanghai")
+  preferences   Json              @default("{}")
+  demo          Boolean           @default(false)
+  sessions      Session[]
+  accounts      Account[]
+  decks         Deck[]
+  items         LearningItem[]
+  states        UserCardState[]
+  events        ReviewEvent[]
+  flags         ItemFlag[]
+  studySessions StudySession[]
+  revisions     ContentRevision[]
+}
+
+model Session {
+  id        String   @id
+  expiresAt DateTime
+  token     String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  ipAddress String?
+  userAgent String?
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Account {
+  id                    String    @id
+  accountId             String
+  providerId            String
+  userId                String
+  user                  User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accessToken           String?
+  refreshToken          String?
+  idToken               String?
+  accessTokenExpiresAt  DateTime?
+  refreshTokenExpiresAt DateTime?
+  scope                 String?
+  password              String?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@unique([providerId, accountId])
+  @@index([userId])
+}
+
+model Verification {
+  id         String   @id
+  identifier String
+  value      String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([identifier])
+}
+
+model Book {
+  id      Int           @id
+  title   String
+  lessons Lesson[]
+  entries SourceEntry[]
+}
+
+model Lesson {
+  id      String              @id
+  bookId  Int
+  number  Int
+  book    Book                @relation(fields: [bookId], references: [id])
+  entries SourceEntryLesson[]
+
+  @@unique([bookId, number])
+}
+
+model WorkbookImport {
+  id         String          @id
+  fileName   String
+  byteSize   Int
+  report     Json
+  importedAt DateTime        @default(now())
+  versions   SourceVersion[]
+}
+
+model SourceDocument {
+  id       String        @id
+  label    String
+  coverage String
+  entries  SourceEntry[]
+}
+
+model SourceEntry {
+  id            String              @id @default(uuid())
+  sourceKey     String              @unique
+  bookId        Int
+  book          Book                @relation(fields: [bookId], references: [id])
+  documentId    String
+  document      SourceDocument      @relation(fields: [documentId], references: [id])
+  rowNumber     Int
+  serial        String
+  raw           Json
+  active        Boolean             @default(true)
+  sourceVersion Int                 @default(1)
+  lessons       SourceEntryLesson[]
+  versions      SourceVersion[]
+  items         LearningItem[]
+}
+
+model SourceEntryLesson {
+  sourceEntryId String
+  lessonId      String
+  sourceEntry   SourceEntry @relation(fields: [sourceEntryId], references: [id])
+  lesson        Lesson      @relation(fields: [lessonId], references: [id])
+
+  @@id([sourceEntryId, lessonId])
+}
+
+model SourceVersion {
+  id            String         @id @default(uuid())
+  sourceEntryId String
+  importId      String
+  sourceEntry   SourceEntry    @relation(fields: [sourceEntryId], references: [id])
+  import        WorkbookImport @relation(fields: [importId], references: [id])
+  raw           Json
+  createdAt     DateTime       @default(now())
+
+  @@unique([sourceEntryId, importId])
+}
+
+model SourceAsset {
+  id                String  @id
+  sha256            String
+  fileName          String
+  thumbnailFileName String?
+  metadata          Json
+}
+
+model LearningItem {
+  id              String            @id @default(uuid())
+  sourceEntryId   String?
+  sourceEntry     SourceEntry?      @relation(fields: [sourceEntryId], references: [id])
+  ownerId         String?
+  owner           User?             @relation(fields: [ownerId], references: [id])
+  russian         String
+  chinese         String
+  searchKey       String
+  kind            String            @default("word")
+  morphology      String            @default("")
+  notes           String            @default("")
+  example         String            @default("")
+  tags            String[]          @default([])
+  missingMeaning  Boolean           @default(false)
+  disputed        Boolean           @default(false)
+  meaningDisputed Boolean           @default(false)
+  annotations     Json?
+  contentVersion  Int               @default(1)
+  archived        Boolean           @default(false)
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+  cards           LearningCard[]
+  deckItems       DeckItem[]
+  flags           ItemFlag[]
+  revisions       ContentRevision[]
+
+  @@index([ownerId, archived])
+  @@index([sourceEntryId])
+}
+
+model LearningCard {
+  id        String          @id
+  itemId    String
+  item      LearningItem    @relation(fields: [itemId], references: [id])
+  direction String
+  states    UserCardState[]
+  events    ReviewEvent[]
+
+  @@unique([itemId, direction])
+}
+
+model UserCardState {
+  userId    String
+  cardId    String
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  card      LearningCard @relation(fields: [cardId], references: [id])
+  memory    Json
+  due       DateTime
+  version   Int          @default(0)
+  updatedAt DateTime     @updatedAt
+
+  @@id([userId, cardId])
+  @@index([userId, due])
+}
+
+model StudySession {
+  id        String        @id
+  userId    String
+  user      User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  events    ReviewEvent[]
+}
+
+model ReviewEvent {
+  id                String       @id
+  userId            String
+  user              User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  cardId            String
+  card              LearningCard @relation(fields: [cardId], references: [id])
+  sessionId         String
+  session           StudySession @relation(fields: [sessionId], references: [id])
+  deviceId          String
+  clientSequence    Int
+  direction         String
+  rating            String
+  correct           Boolean
+  practice          Boolean
+  occurredAt        DateTime
+  receivedAt        DateTime     @default(now())
+  effectiveAt       DateTime?
+  baseVersion       Int
+  contentVersion    Int
+  schedulerVersion  String
+  parametersVersion String
+  status            String       @default("accepted")
+  conflictReason    String?
+  payload           Json
+
+  @@unique([userId, deviceId, clientSequence])
+  @@index([userId, receivedAt])
+}
+
+model Deck {
+  id        String     @id @default(uuid())
+  userId    String
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String
+  category  String     @default("")
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+  items     DeckItem[]
+
+  @@index([userId])
+}
+
+model DeckItem {
+  deckId String
+  itemId String
+  deck   Deck         @relation(fields: [deckId], references: [id], onDelete: Cascade)
+  item   LearningItem @relation(fields: [itemId], references: [id])
+
+  @@id([deckId, itemId])
+}
+
+model ItemFlag {
+  userId    String
+  itemId    String
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  item      LearningItem @relation(fields: [itemId], references: [id])
+  favorite  Boolean      @default(false)
+  suspended Boolean      @default(false)
+
+  @@id([userId, itemId])
+}
+
+model ContentRevision {
+  id        String       @id @default(uuid())
+  itemId    String
+  item      LearningItem @relation(fields: [itemId], references: [id])
+  actorId   String
+  actor     User         @relation(fields: [actorId], references: [id])
+  reason    String
+  before    Json
+  after     Json
+  version   Int
+  createdAt DateTime     @default(now())
+
+  @@unique([itemId, version])
+}
+
+model OcrJob {
+  id          String   @id @default(uuid())
+  userId      String
+  deckId      String
+  engine      String
+  result      Json
+  confirmedAt DateTime @default(now())
+
+  @@index([userId])
+}

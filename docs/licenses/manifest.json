@@ -1,0 +1,288 @@
+[
+  {
+    "package": "@prisma/adapter-pg",
+    "version": "7.10.1",
+    "license": "Apache-2.0",
+    "files": [
+      "@prisma--adapter-pg-LICENSE"
+    ],
+    "scope": "runtime"
+  },
+  {
+    "package": "@prisma/client",
+    "version": "7.10.1",
+    "license": "Apache-2.0",
+    "files": [
+      "@prisma--client-LICENSE"
+    ],
+    "scope": "runtime"
+  },
+  {
+    "package": "better-auth",
+    "version": "1.7.12",
+    "license": "MIT",
+    "files": [
+      "better-auth-LICENSE.md"
+    ],
+    "scope": "runtime"
+  },
+  {
+    "package": "dexie",
+    "version": "4.4.7",
+    "license": "Apache-2.0",
+    "files": [
+      "dexie-LICENSE"
+    ],
+    "scope": "runtime"
+  },
+  {
+    "package": "dotenv",
+    "version": "17.2.3",
+    "license": "BSD-2-Clause",
+    "files": [
+      "dotenv-LICENSE"
+    ],
+    "scope": "runtime"
+  },
+  {
+    "package": "lucide-react",
+    "version": "1.61.0",
+    "license": "ISC",
+    "files": [
+      "lucide-react-LICENSE"
+    ],
+    "scope": "runtime"
+  },
+  {
+    "package": "motion",
+    "version": "14.6.0",
+    "license": "MIT",
+    "files": [
+      "motion-LICENSE.md"
+    ],
+    "scope": "runtime"
+  },
+  {
+    "package": "next",
+    "version": "16.4.3",
+    "license": "MIT",
+    "files": [
+      "next-license.md"
+    ],
+    "scope": "runtime"
+  },
+  {
+    "package": "pg",
+    "version": "8.23.1",
+    "license": "MIT",
+    "files": [
+      "pg-LICENSE"
+    ],
+    "scope": "runtime"
+  },
+  {
+    "package": "react",
+    "version": "19.3.1",
+    "license": "MIT",
+    "files": [
+      "react-LICENSE"
+    ],
+    "scope": "runtime"
+  },
+  {
+    "package": "react-dom",
+    "version": "19.3.1",
+    "license": "MIT",
+    "files": [
+      "react-dom-LICENSE"
+    ],
+    "scope": "runtime"
+  },
+  {
+    "package": "sharp",
+    "version": "0.34.5",
+    "license": "Apache-2.0",
+    "files": [
+      "sharp-LICENSE"
+    ],
+    "scope": "runtime"
+  },
+  {
+    "package": "tesseract.js",
+    "version": "7.0.0",
+    "license": "Apache-2.0",
+    "files": [
+      "tesseract.js-LICENSE.md"
+    ],
+    "scope": "runtime"
+  },
+  {
+    "package": "ts-fsrs",
+    "version": "5.4.2",
+    "license": "MIT",
+    "files": [
+      "ts-fsrs-LICENSE"
+    ],
+    "scope": "runtime"
+  },
+  {
+    "package": "zod",
+    "version": "4.6.7",
+    "license": "MIT",
+    "files": [
+      "zod-LICENSE"
+    ],
+    "scope": "runtime"
+  },
+  {
+    "package": "@axe-core/playwright",
+    "version": "4.14.0",
+    "license": "MPL-2.0",
+    "files": [
+      "@axe-core--playwright-LICENSE"
+    ],
+    "scope": "development"
+  },
+  {
+    "package": "@playwright/test",
+    "version": "1.64.1",
+    "license": "Apache-2.0",
+    "files": [
+      "@playwright--test-LICENSE"
+    ],
+    "scope": "development"
+  },
+  {
+    "package": "@tailwindcss/postcss",
+    "version": "4.3.3",
+    "license": "MIT",
+    "files": [
+      "@tailwindcss--postcss-LICENSE"
+    ],
+    "scope": "development"
+  },
+  {
+    "package": "@types/node",
+    "version": "24.10.0",
+    "license": "MIT",
+    "files": [
+      "@types--node-LICENSE"
+    ],
+    "scope": "development"
+  },
+  {
+    "package": "@types/pg",
+    "version": "8.23.1",
+    "license": "MIT",
+    "files": [
+      "@types--pg-LICENSE"
+    ],
+    "scope": "development"
+  },
+  {
+    "package": "@types/react",
+    "version": "19.3.0",
+    "license": "MIT",
+    "files": [
+      "@types--react-LICENSE"
+    ],
+    "scope": "development"
+  },
+  {
+    "package": "@types/react-dom",
+    "version": "19.3.0",
+    "license": "MIT",
+    "files": [
+      "@types--react-dom-LICENSE"
+    ],
+    "scope": "development"
+  },
+  {
+    "package": "eslint",
+    "version": "10.13.0",
+    "license": "MIT",
+    "files": [
+      "eslint-LICENSE"
+    ],
+    "scope": "development"
+  },
+  {
+    "package": "fake-indexeddb",
+    "version": "6.2.6",
+    "license": "Apache-2.0",
+    "files": [
+      "fake-indexeddb-LICENSE"
+    ],
+    "scope": "development"
+  },
+  {
+    "package": "prisma",
+    "version": "7.10.1",
+    "license": "Apache-2.0",
+    "files": [
+      "prisma-LICENSE"
+    ],
+    "scope": "development"
+  },
+  {
+    "package": "tailwindcss",
+    "version": "4.3.3",
+    "license": "MIT",
+    "files": [
+      "tailwindcss-LICENSE"
+    ],
+    "scope": "development"
+  },
+  {
+    "package": "tsx",
+    "version": "4.23.15",
+    "license": "MIT",
+    "files": [
+      "tsx-LICENSE"
+    ],
+    "scope": "development"
+  },
+  {
+    "package": "typescript",
+    "version": "6.0.3",
+    "license": "Apache-2.0",
+    "files": [
+      "typescript-LICENSE.txt"
+    ],
+    "scope": "development"
+  },
+  {
+    "package": "vitest",
+    "version": "5.0.5",
+    "license": "MIT",
+    "files": [
+      "vitest-LICENSE.md"
+    ],
+    "scope": "development"
+  },
+  {
+    "package": "typescript-eslint",
+    "version": "8.72.0",
+    "license": "MIT",
+    "files": [
+      "typescript-eslint-LICENSE"
+    ],
+    "scope": "development"
+  },
+  {
+    "package": "@next/eslint-plugin-next",
+    "version": "16.4.3",
+    "license": "MIT",
+    "files": [],
+    "scope": "development"
+  },
+  {
+    "package": "eslint-plugin-react-hooks",
+    "version": "7.1.1",
+    "license": "MIT",
+    "files": [
+      "eslint-plugin-react-hooks-LICENSE"
+    ],
+    "scope": "development"
+  }
+]

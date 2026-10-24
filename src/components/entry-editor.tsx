@@ -1,0 +1,11 @@
+'use client';
+
+import { Plus, Trash2 } from 'lucide-react';
+import type { DraftEntry } from '../lib/ocr';
+import { Button } from './ui';
+
+export function blankEntry(): DraftEntry { return { russian: '', chinese: '', kind: 'word', notes: '', example: '', tags: [] }; }
+export default function EntryEditor({ entries, onChange, single = false }: { entries: DraftEntry[]; onChange: (entries: DraftEntry[]) => void; single?: boolean }) {
+  function update(index: number, patch: Partial<DraftEntry>) { onChange(entries.map((entry, i) => i === index ? { ...entry, ...patch } : entry)); }
+  return <div className="entry-editor">{entries.map((entry, index) => <fieldset className="entry-fieldset" key={index}><legend>第 {index + 1} 条</legend><div className="entry-top"><label>内容类型<select value={entry.kind} onChange={event => update(index, { kind: event.target.value as DraftEntry['kind'] })}><option value="word">单词</option><option value="phrase">词组</option><option value="sentence">句子</option></select></label>{!single && <button className="icon-button danger-text" aria-label={`移除第 ${index + 1} 条`} onClick={() => onChange(entries.filter((_, i) => i !== index))}><Trash2 size={18} /></button>}</div><label>俄语<textarea lang="ru" rows={entry.kind === 'sentence' ? 3 : 1} value={entry.russian} onChange={event => update(index, { russian: event.target.value })} placeholder="保留完整单词、词组或句子" /></label><label>中文释义<input value={entry.chinese} onChange={event => update(index, { chinese: event.target.value })} placeholder="可暂留空，补充后再练习" /></label><details><summary>备注、例句与标签</summary><label>备注<input value={entry.notes} onChange={event => update(index, { notes: event.target.value })} /></label><label>例句<textarea value={entry.example} onChange={event => update(index, { example: event.target.value })} rows={2} /></label><label>标签（用逗号分隔）<input value={entry.tags.join(', ')} onChange={event => update(index, { tags: event.target.value.split(/[,，]/).map(tag => tag.trim()).filter(Boolean) })} /></label></details>{/[a-zA-Z]/.test(entry.russian) && <p className="small notice-warning">包含拉丁字母，请检查是否混入了 a、c、e 等形似字符。</p>}</fieldset>)}{!single && <Button variant="ghost" onClick={() => onChange([...entries, blankEntry()])}><Plus size={17} />增加一条</Button>}</div>;
+}
