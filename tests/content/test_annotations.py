@@ -22,16 +22,18 @@ class AnnotationTests(unittest.TestCase):
         cls.annotations = json.loads(path.read_text())
         cls.entries = {e["sourceKey"]: e for e in json.loads((ROOT / "data/processed/workbook.json").read_text())["entries"]}
 
-    def test_fifty_real_sources_and_distinct_categories(self):
+    def test_every_source_row_has_complete_states_and_representatives_are_retained(self):
         builder.validate(self.annotations, self.entries)
-        self.assertEqual(len(self.annotations), 50)
+        self.assertEqual(len(self.annotations), 4835)
         report = builder.report_coverage(self.annotations, self.entries)
-        self.assertEqual({k: v["itemCount"] for k, v in report["perCategory"].items()}, {"noun": 15, "adjective": 10, "verb": 10, "phrase": 10, "sentence": 5})
+        self.assertEqual(sum(v["itemCount"] for v in report["perCategory"].values()), 4835)
+        self.assertEqual(report["representativeCount"], 50)
+        self.assertEqual(report["representativeFieldCoverage"]["examples"]["statusCounts"], {"generated": 39, "source": 5, "unknown": 6})
         self.assertEqual(len(report["perLesson"]), 69)
         self.assertEqual(len(report["perBook"]), 6)
-        self.assertEqual(report["notAnnotatedSourceCount"], 4785)
+        self.assertEqual(report["notAnnotatedSourceCount"], 0)
         for key, content in self.annotations.items():
-            self.assertEqual(content["meaning"]["value"], self.entries[key]["chinese"])
+            self.assertEqual(content["meaning"]["value"], None if self.entries[key]["missingMeaning"] else self.entries[key]["chinese"])
             self.assertEqual(content["provenance"]["value"]["assetIds"], self.entries[key]["assetIds"])
             self.assertTrue(all(field["status"] != "reviewed" for field in content.values()))
 

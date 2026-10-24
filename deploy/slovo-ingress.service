@@ -1,0 +1,11 @@
+[Unit]
+Description=Slovo ingress: OVH loopback 58092 to rex-cli loopback 4188
+After=network-online.target
+
+[Service]
+ExecStart=/usr/bin/ssh -N -T -F /dev/null -p 22 -o IPQoS=none -o BatchMode=yes -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes -o UserKnownHostsFile=%h/.ssh/slovo-ingress_known_hosts -o ExitOnForwardFailure=yes -o ServerAliveInterval=15 -o ServerAliveCountMax=3 -o ConnectTimeout=10 -i %h/.ssh/slovo-ingress_ed25519 -R 127.0.0.1:58092:127.0.0.1:4188 rex-cli-ingress@51.210.42.88
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=default.target

@@ -4,7 +4,7 @@ import { randomUUID } from 'node:crypto';
 import type { BootstrapDTO, DeckDTO, ItemsResponse, ReviewEventInput } from '../../src/domain/types';
 import type { StudySession } from '../../src/domain/learning';
 
-const artifacts = 'artifacts/compatibility';
+const artifacts = `${process.env.SLOVO_E2E_ARTIFACT_ROOT || 'artifacts'}/compatibility`;
 type FeedbackTiming = { domMs: number; nextFrameMs: number };
 type ProbeWindow = Window & { slovoFeedbackTimings?: FeedbackTiming[] };
 

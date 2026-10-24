@@ -9,7 +9,7 @@ import type { BootstrapDTO, DeckDTO, ItemsResponse, ReviewEventInput, SyncRespon
 
 // Run this checkpoint only after A/B, against a built production server so the
 // public service-worker shell references immutable production asset URLs.
-const artifacts = 'artifacts/checkpoint-c';
+const artifacts = `${process.env.SLOVO_E2E_ARTIFACT_ROOT || 'artifacts'}/checkpoint-c`;
 test.use({ actionTimeout: 15_000 });
 type History = { events: { id: string; practice: boolean }[]; conflicts: { id: string; conflictReason: string }[] };
 type Outbox = { userId: string; id: string; event: ReviewEventInput; conflict?: string };

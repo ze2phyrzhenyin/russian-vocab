@@ -62,9 +62,22 @@ export default function DecksPanel({ userId, onStudy, onDetail, onMessage }: { u
     if (!active || !window.confirm(`从这个词库移除「${item.russian}」？`)) return;
     try { await request(`/api/decks/${encodeURIComponent(active.id)}/items/${encodeURIComponent(item.id)}`, { method: 'DELETE' }); await load(); } catch (caught) { setError(errorMessage(caught)); }
   }
+  async function exportDeck() {
+    if (!active || busy) return;
+    setBusy(true); setError('');
+    try {
+      // Export a fresh server snapshot: the visible list may still be refreshing
+      // after an edit, or may belong to a previously selected collection.
+      const [catalog, content] = await Promise.all([api.decks(), fetchAllItems({ deckId: active.id })]);
+      const deck = catalog.decks.find(candidate => candidate.id === active.id);
+      if (!deck) throw new Error('这个词库已不存在，请刷新列表。');
+      setItems(content.items); setActive(deck);
+      downloadJson(`${deck.name}.json`, { name: deck.name, category: deck.category, items: content.items });
+    } catch (caught) { setError(errorMessage(caught)); } finally { setBusy(false); }
+  }
   return <section>
     <PageTitle eyebrow="МОИ СЛОВА" title={active ? active.name : '把遇见的词，留下来。'} description={active ? `${active.category || '个人词库'} · ${active.count} 条内容` : '课本之外，也有属于你的俄语。'} action={!active ? <Button onClick={() => openDeckModal()}><Plus size={18} />新建词库</Button> : undefined} />
-    {active ? <><div className="deck-toolbar"><Button variant="ghost" onClick={() => { setActive(null); setItems([]); }}><ArrowLeft size={17} />全部词库</Button><div className="toolbar-actions"><button className="icon-button" aria-label="重命名词库" onClick={() => openDeckModal(true)}><Edit3 size={18} /></button><button className="icon-button" aria-label="导出词库" onClick={() => downloadJson(`${active.name}.json`, { name: active.name, category: active.category, items })}><Download size={18} /></button><button className="icon-button danger-text" aria-label="删除词库" onClick={() => void deleteDeck()}><Trash2 size={18} /></button></div></div>
+    {active ? <><div className="deck-toolbar"><Button variant="ghost" onClick={() => { setActive(null); setItems([]); }}><ArrowLeft size={17} />全部词库</Button><div className="toolbar-actions"><button className="icon-button" aria-label="重命名词库" onClick={() => openDeckModal(true)}><Edit3 size={18} /></button><button className="icon-button" aria-label="导出词库" disabled={busy || loading} onClick={() => void exportDeck()}><Download size={18} /></button><button className="icon-button danger-text" aria-label="删除词库" onClick={() => void deleteDeck()}><Trash2 size={18} /></button></div></div>
       <div className="deck-study-banner"><div><h2>你的词，你的节奏。</h2><p>单词、词组和句子，都能加入下一轮学习。</p></div><Button disabled={!items.some(item => !item.missingMeaning)} onClick={() => onStudy(active.id)}>开始学习<ArrowRight size={18} /></Button></div>
       <div className="toolbar"><Button variant="secondary" onClick={() => void openEntry()}><Plus size={18} />手动添加</Button><Button variant="secondary" onClick={() => setModal('ocr')}><Camera size={18} />从照片拾词</Button></div>
       {items.length ? <div className="word-list">{items.map(item => <div className="deck-word-row" key={item.id}><button className="word-row" onClick={() => onDetail(item)}><span className="word-text"><strong lang="ru">{item.russian}</strong><span>{item.missingMeaning ? '尚缺中文释义 · 补充后可练习' : item.chinese}</span><small>{item.kind === 'word' ? '单词' : item.kind === 'phrase' ? '词组' : '句子'}{item.sourceEntryId ? ' · 来自教材' : ''}</small></span></button><div className="word-edit-actions">{!item.sourceEntryId && <button className="icon-button" aria-label={`编辑 ${item.russian}`} onClick={() => void openEntry(item)}><Edit3 size={17} /></button>}<button className="icon-button danger-text" aria-label={`移除 ${item.russian}`} onClick={() => void deleteItem(item)}><Trash2 size={17} /></button></div></div>)}</div> : !loading && <EmptyState title="留住第一个词">手动添加，或拍一张词表照片。</EmptyState>}

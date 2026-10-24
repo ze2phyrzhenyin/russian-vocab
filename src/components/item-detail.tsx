@@ -16,7 +16,7 @@ function sourceLabel(source: string) {
   if (source.startsWith('OpenCorpora')) return 'OpenCorpora 俄语形态词典 · CC BY-SA 3.0';
   return source;
 }
-const statusLabels: Record<EvidenceField['status'], string> = { source: '有来源', generated: '候选说明 · 待核查', reviewed: '已审核', unknown: '尚缺资料', disputed: '有争议 · 待核查', 'not-applicable': '不适用' };
+const statusLabels: Record<EvidenceField['status'], string> = { source: '有来源', generated: '候选说明 · 待核查', reviewed: '已审核', unknown: '尚缺资料', disputed: '有争议 · 待核查', 'not-applicable': '不适用', rejected: '审核未通过 · 保留原值' };
 function Value({ value }: { value: unknown }) {
   if (value === null || value === undefined || value === '') return <span className="muted">尚缺资料</span>;
   if (Array.isArray(value)) return <ul className="annotation-list">{value.map((child, index) => <li key={index}><Value value={child} /></li>)}</ul>;
@@ -29,6 +29,7 @@ function Value({ value }: { value: unknown }) {
   if (typeof value === 'boolean') return <span>{value ? '是' : '否'}</span>;
   return <span lang={typeof value === 'string' && /[а-яё]/iu.test(value) ? 'ru' : undefined}>{values[String(value)] || String(value)}</span>;
 }
+export { Value as AnnotationValue, labels as annotationFieldLabels, methods as annotationMethodLabels, sourceLabel as annotationSourceLabel };
 export default function ItemDetail({ initial, onClose, onMessage, onChanged }: { initial: LearningItemDTO; onClose: () => void; onMessage: (message: string) => void; onChanged: () => void }) {
   const [item, setItem] = useState(initial); const [error, setError] = useState(''); const [sources, setSources] = useState(false); const [decks, setDecks] = useState<DeckDTO[]>([]); const [deckId, setDeckId] = useState(''); const [busy, setBusy] = useState(false);
   useEffect(() => {

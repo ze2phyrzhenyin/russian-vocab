@@ -1,31 +1,40 @@
 # Current status
 
-2026-10-24: User explicitly authorized full implementation of docs/DEVELOPMENT_PROMPT.txt by Codex. Earlier preparation-only stop is superseded. No Claude delegation.
+2026-10-24: Codex implementation, full-corpus annotation workflow, GitHub publication and public deployment explicitly authorized. User chose the zhaoyang.fr domain and requested a normal test account. No Claude delegation.
 
-## Delivered
-- The requested first learning loop and development framework are complete. Final combined E2E run: 10/10 passed, no skipped/flaky cases (2026-10-24, 69.9 seconds).
-- Actual running entry: http://localhost:4187 through the Mac SSH forward to rex-cli. App and PostgreSQL containers are healthy and bound only to loopback. Public deployment has not been performed.
-- rex-cli isolated database, full source import, 50 annotations, real auth seed and local OCR assets initialized successfully.
+## Runtime and access
 
-## Checkpoints
-- A: passed locally (2026-10-24): actual workbook import, 39 domain/database/config tests and real Chromium login/selection/wrong-answer/persistence/mobile-layout path. See `tests/e2e/checkpoint-a.spec.ts`, `artifacts/screenshots/A-*` and `docs/TESTING.md`. Fixed fast-answer outbox drain and post-login landing during acceptance.
-- B: passed locally (2026-10-24): real Chromium personal collection CRUD/manual types/export/single-word recall and actual Tesseract fixture recognition (15 boxes, engine confidence 91%); edited/confirmed 4 OCR entries saved and learned. Source image authorized/anonymous access and Unicode searches passed. See `artifacts/ocr/browser/`.
-- C: passed on production standalone (2026-10-24), 4/4 browser tests. Offline 10 events survive reload, sync exactly 10 and replay without duplication; account A/B cache/draft/deck isolation, conflict replay and admin revision+restoration passed. Nine axe audits (3 pages × 360/390/430) had zero violations. See `artifacts/checkpoint-c/`.
+- Public: https://slovo.zhaoyang.fr
+- Private GitHub: https://github.com/ze2phyrzhenyin/russian-vocab
+- Canonical server: rex-cli:/home/adminlinux/Developer/russian-vocab; local workspace /Users/zephyrsui/Developer/russian-vocab.
+- Independent production PostgreSQL `slovo` and `slovo-production` Compose; APP_ENV=production, DEMO_MODE=false. Fixed demo accounts are not created in production.
+- Public test-account credentials are private `.local/production-test-access.md`; administrator handoff is `.local/rex-cli-production-admin-access.md` locally and `.local/production-admin-access.md` on rex-cli. Never commit these files.
+- Local/SSH demo remains isolated at ports 4186/4187; it is not the public production database.
 
-## Resume
-Read AGENTS.md, PLANS.md, docs/DEVELOPMENT_PROMPT.txt, docs/CONTRACT.md and current Git changes. Do not initialize again or overwrite concurrent edits. Root owns package/lock/schema/API integration.
+## Delivered content workflow
 
-## Latest evidence
-- Existing local PostgreSQL 14.18 reachable; server rex-cli has Docker 29.9.2, Python and Node 24.21.0.
-- Verified/imported 4,835 source rows, 6 books, 69 lessons, 4,838 memberships, 108 images/104 referenced anchors. Current source import is complete; original six-book completeness is not established.
-- 50 representative annotation drafts imported. None is represented as human-reviewed.
-- Latest complete quality gate: `dev-run pnpm verify` passed lint, TypeScript, 64 TS/domain/PostgreSQL/security tests, 11 importer tests, 9 content tests and production build. Logs: `artifacts/verification/`.
-- Final runtime includes separate local/remote cookie namespaces, Chinese authentication errors, a fully precached public shell and explicit offline readiness confirmation. Real demo/new/admin logins and ordinary-user admin rejection passed at `http://localhost:4187`.
-- Supplemental tests passed both actual question directions, 3–7-question mistake spacing, 44px targets, long Cyrillic/Chinese, 200% text, and actual WebKit 27.2 offline refresh with 3 exact synced events. This is macOS browser emulation, not physical iOS/Android evidence.
-- Final evidence index: `artifacts/verification/final-summary.json`, `artifacts/verification/e2e-final.json`, `artifacts/deployment/rex-cli-runtime.json`, `artifacts/deployment/smoke-4187.json`. Detailed handoff: `docs/DELIVERY.md`.
+- 4,835 source rows / textbook learning items, 6 books, 69 lessons, 4,838 memberships, 108 images and 14,505 direction cards.
+- All 4,835 entries have 32 field states. Actual source evidence, generated dictionary candidates, unknown, disputed and not-applicable remain distinct. 50 representative explanation drafts retained; no automatic human-review claims.
+- 3,181 entries have declension candidates; 1,058 have non-disputed conjugation candidates. 35 original meanings are missing, 11 source entries have known issues; 4,795 remain eligible for meaning-choice practice.
+- Source fields 17,073; generated fields 35,666; unknown 63,750; disputed 40; applicable fields 116,529. Reviewed fields remain 0 after QA restores the original snapshots.
+- Persistent jobs snapshot per-item source and candidate hashes, carry provider/schema/version/zero-cost budget, run bounded atomic batches, survive interruption, support cancellation/resumption and failed-only retry. Reviewed/rejected fields are protected.
+- Administrator workbench supports filters by book/lesson/part of speech/field/status, evidence inspection, explicit field approval/rejection and audited restoration of a selected historical snapshot. Source rows and learning history remain separate.
+- Local job `27066cf3-3e55-4035-8086-ab78462c96cf` and production job `d9ad835f-6955-4193-bef4-c4f8e03eb9b2`: both completed 4,835/4,835, zero failures, zero cloud cost. Dataset hash `90c23282bc06ec36cc25b6c732a783eae92a28ad2c6b2001b4b1a7339ad1b229`.
+- Generator repeat: 4,835 cache hits / zero regeneration, byte-identical outputs; Node/Python input/output hashes agree for every source row.
 
-## Next / limitations
-- Next milestone: persistent full-corpus enrichment jobs, field review and rollback; keep source/draft/reviewed states separate. Cloud provider remains unconfigured. Current 50 representatives do not establish complete annotations for 4,835 entries; human-reviewed field count remains zero.
-- Complete advanced spelling/listening/grammar exercises, physical-device acceptance and separately authorized production deployment afterward.
-- No external credential blocks the delivered learning/OCR/offline loop. CI configuration exists but has not run on GitHub; no GitHub push/public workbook publication was performed.
-- Playwright now starts/reuses the local built server automatically; a remote PLAYWRIGHT_BASE_URL uses the caller-provided instance. A test-server shutdown caused one failed attempt before this lifecycle improvement; the final 10/10 report is the authoritative acceptance run.
+## Verification
+
+- Original A/B/C learning, OCR, offline and permission loops remain part of the release regression.
+- Workbench real browser acceptance: 2/2 passed, field approve/reject/history restoration, cancellation and resumption; source fingerprint unchanged, final reviewed-field count 0.
+- Four workbench axe audits at 360/390/430 and dark mode: zero violations, 44px controls, no horizontal overflow. Real PostgreSQL tests cover concurrent source import and review, strict request replay, expired leases and stale-version rejection.
+- Final engineering: 79 TS/PostgreSQL tests + 11 importer + 19 content tests, lint/types/build passed. Local browser regression 10/10 plus workbench 2/2 passed. Public B/OCR/export, C/10-event offline, and WebKit/3-event offline paths all passed; B was rerun after a real public-latency stale-export bug was fixed.
+- Final engineering, local regression and public release results are indexed in docs/DELIVERY.md and private artifacts/verification plus artifacts/deployment/public.
+- GitHub Actions was attempted but could not start because the account has a billing/spending restriction. Local/server checks provide the executed evidence; no CI pass is claimed.
+
+## Remaining evidence and product extensions
+
+- User explicitly says there is no connected phone. Android adb lists no devices; iOS device tooling is unavailable. Chromium/WebKit mobile emulation is not physical iOS/Android acceptance.
+- All-entry candidate coverage is not complete knowledge or human review. Unknown fields still need reliable evidence and actual reviewer actions. No cloud AI provider is configured; cloud tasks fail clearly without external calls.
+- Cross-source lexeme/sense reconciliation and advanced spelling/listening/grammar exercises remain separate extensions. The provided book 3 source is a 17-page extract; importing this workbook does not establish completeness of all original books.
+
+Read AGENTS.md, docs/CONTENT_WORKFLOW.md, docs/CONTENT_WORKBENCH_QA.md and docs/DEPLOYMENT.md before resuming. Do not reinitialize existing databases, replace credentials or overwrite another administrator's reviewed content.

@@ -6,7 +6,7 @@ const localDemo: NodeJS.ProcessEnv = { NODE_ENV: 'test', APP_ENV: 'development',
 describe('runtime demo environment boundaries', () => {
   it('allows explicitly isolated local demo and non-demo production configuration', () => {
     expect(readRuntimeConfig(localDemo).demoMode).toBe(true);
-    expect(readRuntimeConfig({ ...localDemo, APP_ENV: 'production', DEMO_MODE: 'false', DATABASE_URL: 'postgresql://slovo:test-only@localhost:55486/production' }).demoMode).toBe(false);
+    expect(readRuntimeConfig({ ...localDemo, APP_ENV: 'production', DEMO_MODE: 'false', DATABASE_URL: 'postgresql://slovo:test-only@localhost:55486/production', BETTER_AUTH_URL:'https://slovo.zhaoyang.fr' }).demoMode).toBe(false);
   });
   it('fails closed when production tries to enable fixed demo accounts', () => {
     expect(() => readRuntimeConfig({ ...localDemo, APP_ENV: 'production' })).toThrow(/cannot enable DEMO_MODE/);
@@ -26,5 +26,10 @@ describe('runtime demo environment boundaries', () => {
       expect(() => readRuntimeConfig({ ...localDemo, BETTER_AUTH_SECRET: secret })).toThrow(/secret/);
     }
     expect(() => readRuntimeConfig({ ...localDemo, DATABASE_URL: '' })).toThrow(/DATABASE_URL/);
+  });
+  it('requires a clean HTTPS origin for a public production session',()=>{
+    const production={...localDemo,APP_ENV:'production',DEMO_MODE:'false',DATABASE_URL:'postgresql://slovo:test-only@localhost:55486/production'};
+    expect(()=>readRuntimeConfig(production)).toThrow(/HTTPS/);
+    for(const BETTER_AUTH_URL of ['https://slovo.zhaoyang.fr/path','https://user:password@slovo.zhaoyang.fr','https://slovo.zhaoyang.fr/?bad=1'])expect(()=>readRuntimeConfig({...production,BETTER_AUTH_URL})).toThrow(/origin/);
   });
 });

@@ -1,0 +1,44 @@
+name: slovo-production
+services:
+  db:
+    image: postgres:17-alpine@sha256:eee6c6e1b0894fa4fe0075eb054af9fd1cf39a35321c2d4110626cfe506411fb
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?Set production database name}
+      POSTGRES_USER: ${POSTGRES_USER:?Set database user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set database password}
+    ports: ["127.0.0.1:55488:5432"]
+    volumes: ["slovo-production-postgres:/var/lib/postgresql/data"]
+    mem_limit: 1g
+    cpus: 1
+    pids_limit: 200
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+  app:
+    image: ${SLOVO_IMAGE:?Set verified production image tag}
+    restart: unless-stopped
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      BETTER_AUTH_SECRET: ${BETTER_AUTH_SECRET:?Generate auth secret}
+      BETTER_AUTH_URL: https://slovo.zhaoyang.fr
+      APP_ENV: production
+      DEMO_MODE: "false"
+      AI_PROVIDER: unconfigured
+      SLOVO_ANNOTATIONS_ROOT: /app/data/processed
+      HOSTNAME: 0.0.0.0
+      PORT: 4186
+    depends_on:
+      db:
+        condition: service_healthy
+    ports: ["127.0.0.1:4188:4186"]
+    volumes:
+      - ./data/assets:/app/data/assets:ro
+      - ./data/processed:/app/data/processed:ro
+    mem_limit: 1536m
+    cpus: 2
+    pids_limit: 256
+volumes:
+  slovo-production-postgres:

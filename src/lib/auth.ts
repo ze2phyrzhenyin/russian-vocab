@@ -8,10 +8,10 @@ export const auth=betterAuth({
   secret:process.env.BETTER_AUTH_SECRET,
   baseURL:config.baseURL,
   // Browser cookies ignore ports; local and SSH-forwarded demos must not overwrite one another.
-  advanced:{cookiePrefix:`slovo-${new URL(config.baseURL).port||'app'}`},
+  advanced:{cookiePrefix:`slovo-${new URL(config.baseURL).port||'app'}`,ipAddress:{ipAddressHeaders:['x-real-ip']}},
   trustedOrigins:[config.baseURL],
   emailAndPassword:{enabled:true,minPasswordLength:10,requireEmailVerification:false},
   user:{additionalFields:{role:{type:'string',defaultValue:'user',input:false},timeZone:{type:'string',defaultValue:'Asia/Shanghai',input:false}}},
   session:{expiresIn:60*60*24*7,updateAge:60*60*24},
-  rateLimit:{enabled:true,window:60,max:100},
+  rateLimit:{enabled:true,window:60,max:100,...(config.production?{customRules:{'/sign-up/email':{window:60,max:5},'/sign-in/email':{window:60,max:10}}}:{})},
 });

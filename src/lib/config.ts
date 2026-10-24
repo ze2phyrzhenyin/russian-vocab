@@ -9,6 +9,8 @@ export function readRuntimeConfig(env:NodeJS.ProcessEnv=process.env){
   if(demoMode&&!demoDatabase)throw new Error('Demo mode requires a dedicated slovo/ruslearn demo database.');
   if(production&&demoDatabase)throw new Error('Production cannot use a demo database containing fixed test accounts.');
   const baseURL=env.BETTER_AUTH_URL||'http://localhost:4186';
-  if(!['http:','https:'].includes(new URL(baseURL).protocol))throw new Error('BETTER_AUTH_URL must be an HTTP(S) origin.');
+  const url=new URL(baseURL);
+  if(!['http:','https:'].includes(url.protocol)||url.username||url.password||url.pathname!=='/'||url.search||url.hash)throw new Error('BETTER_AUTH_URL must be an HTTP(S) origin.');
+  if(production&&url.protocol!=='https:')throw new Error('Production requires an HTTPS origin.');
   return {demoMode,production,baseURL};
 }

@@ -9,7 +9,7 @@ Each checkpoint must run with real authentication and database state before cont
 5. Checkpoint C: account-isolated Dexie caches/outbox, explicit lesson downloads, deterministic transactional synchronization/conflict states, administrator revisions and access tests.
 6. Run lint/type/domain/database/browser/build gates, mobile screenshots (360/390/430), offline 10-event test, source coverage checks and isolated rex-cli demo smoke. Write accurate handoff and remaining full-product milestones.
 
-Follow-on product milestones: complete detailed annotation enrichment/review across all applicable fields; advanced grammar/listening/spelling exercises; additional content/provider infrastructure only when needed; real device acceptance and production deployment separately scoped.
+Follow-on product milestones: complete detailed annotation enrichment/review across all applicable fields; advanced grammar/listening/spelling exercises; additional content/provider infrastructure only when needed; physical device acceptance when hardware is available. Production on slovo.zhaoyang.fr and private GitHub publication were explicitly authorized on 2026-10-24.
 
 ## Delivered gates (2026-10-24)
 
@@ -21,8 +21,14 @@ Follow-on product milestones: complete detailed annotation enrichment/review acr
 | Mobile / browser | 360/390/430, 44px, long text, dark/reduced motion, WebKit offline reload | compatibility E2E; 9 axe audits | Passed |
 | Engineering / runtime | Strict lint/types/tests/build, safe reimport, repeatable setup, real rex-cli logins | `pnpm verify`; `pnpm smoke:demo`; Compose health | Passed |
 
-The final combined browser suite passed 10/10. CI is configured but not run on GitHub. Detailed limits and evidence are in `docs/DELIVERY.md`; these gates do not claim full-corpus annotation review or physical-phone acceptance.
+The final combined browser suite passed 10/10. GitHub Actions was attempted but the account billing/spending restriction prevented the runner from starting. Detailed limits and evidence are in `docs/DELIVERY.md`; these gates do not claim full-corpus annotation review or physical-phone acceptance.
 
-## Next milestone
+## Full-corpus workflow and production (2026-10-24)
 
-Implement persistent enrichment jobs for one lesson, with provider/schema/prompt versions, per-field evidence, cancellation/retry, financial budget, cache and protected reviewed fields. A reviewer must be able to inspect, approve and revert a proposed field with an audit trail. Acceptance: rerun only failed jobs, cancel without losing completed results, never overwrite reviewed fields, and report source/draft/reviewed coverage separately. Expand to all books only after that lesson-level path passes. Current no-key learning and local OCR must remain functional.
+Implemented: all 4,835 entries have 32 provenance/state fields; persisted jobs with candidate/source hashes, cancellation/resume, failed-only retry, zero-cost dictionary provider, protected reviewed/rejected fields, per-field review and audited historical restoration. Local and production full-corpus jobs both completed 4,835/4,835 with zero failures. Cross-language hashes agree and repeat generation hits all 4,835 cached entries.
+
+Real PostgreSQL tests cover job leasing, strict idempotency, concurrent external writers, and source-import/reviewer locking. Workbench browser acceptance covers actual approval/rejection/restoration and batch cancellation/resume. Global engineering and public gates are recorded in STATUS.md and docs/DELIVERY.md.
+
+Public application: https://slovo.zhaoyang.fr; private repo ze2phyrzhenyin/russian-vocab. Production has independent data and no fixed demo accounts. The user explicitly says no physical phone is currently available; do not claim physical-device acceptance.
+
+Remaining content work is to obtain reliable evidence for still-unknown fields and have actual reviewers validate drafts. Automatic candidate coverage is not full human review. Cloud provider activation, spelling/listening/grammar exercise families and cross-source lexical identity remain separate product extensions.

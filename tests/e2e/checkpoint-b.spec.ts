@@ -3,7 +3,7 @@ import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import type { BootstrapDTO, DeckDTO, ItemsResponse } from '../../src/domain/types';
 import type { DraftEntry, OcrResult } from '../../src/lib/ocr';
 
-const artifactDirectory = 'artifacts/ocr/browser';
+const artifactDirectory = `${process.env.SLOVO_E2E_ARTIFACT_ROOT || 'artifacts'}/ocr/browser`;
 
 test.afterEach(async ({ page }, testInfo) => {
   if (testInfo.status !== testInfo.expectedStatus) {

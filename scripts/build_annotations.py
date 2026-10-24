@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build a bounded, source-traceable 50-item annotation demonstration.
+"""Build source-traceable annotations for every source row, with per-item caching.
 
 This is a deterministic local candidate generator, not a human review or AI API.
 No textbook translation is overwritten and no homonyms are merged.
@@ -10,13 +10,15 @@ import argparse
 from collections import Counter, defaultdict
 from datetime import datetime, timezone
 import importlib.metadata
+import hashlib
 import json
 from pathlib import Path
 import re
 
 from extract_vocab import json_bytes, normalize_search, write_if_different
+from annotation_expansion import CorpusAnnotator, FIELDS as REQUIRED_FIELDS, POS
 
-VERSION = "representative-annotations-v1"
+VERSION = "full-corpus-annotations-v2"
 MORPH_SOURCE = "OpenCorpora / pymorphy3-dicts-ru 2.4.417150.4580142; https://pypi.org/project/pymorphy3-dicts-ru/; CC BY-SA 3.0"
 GRAMMAR_SOURCE = "https://pymorphy2.readthedocs.io/en/stable/user/grammemes.html"
 STATUS_VALUES = {"source", "generated", "reviewed", "unknown", "disputed", "not-applicable"}
@@ -108,7 +110,7 @@ def field(value, status, source=None, method=None, version=VERSION):
 
 
 def summarize_parse(parse):
-    return {"form": parse.word, "lemma": parse.normal_form, "tag": str(parse.tag), "partOfSpeech": POS_LABELS.get(parse.tag.POS, parse.tag.POS), "dictionaryKnown": parse.is_known, "score": parse.score}
+    return {"form": parse.word, "lemma": parse.normal_form, "tag": str(parse.tag), "partOfSpeech": POS_LABELS.get(parse.tag.POS, parse.tag.POS), "dictionaryKnown": parse.is_known, "score": str(parse.score)}
 
 
 def dictionary_forms(parse, required):
@@ -202,11 +204,13 @@ def annotate(entry, category, components, morph, issues, corpus_sha):
 
 
 def validate(annotations, entries):
-    if len(annotations) != 50:
-        raise ValueError("Representative annotation set must contain exactly 50 explicitly selected source items")
+    if set(annotations) != set(entries):
+        raise ValueError("Every source row must have exactly one annotation object; no omitted or invented source keys")
     for key, fields in annotations.items():
         if key not in entries:
             raise ValueError(f"Annotation source key not in workbook: {key}")
+        if set(fields) != set(REQUIRED_FIELDS):
+            raise ValueError(f"Annotation fields do not match the complete field contract: {key}")
         for name, value in fields.items():
             if value.get("status") not in STATUS_VALUES or "value" not in value:
                 raise ValueError(f"Invalid EvidenceField {key}.{name}")
@@ -227,59 +231,152 @@ def reject_reviewed_input(previous):
                 raise ValueError(f"Reviewed content exists in source artifact ({key}.{name}): use review-aware database revision pipeline, do not overwrite")
 
 
-def report_coverage(annotations, entries):
-    fields = sorted({name for content in annotations.values() for name in content})
+def canonical_bytes(value):
+    return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"), allow_nan=False).encode("utf-8")
+
+
+def fingerprint(value):
+    return hashlib.sha256(canonical_bytes(value)).hexdigest()
+
+
+def dictionary_identity(morph):
+    return {"pymorphy3": importlib.metadata.version("pymorphy3"),
+            "pymorphy3DictsRu": importlib.metadata.version("pymorphy3-dicts-ru"),
+            "source": morph.dictionary.meta["source"], "sourceVersion": morph.dictionary.meta["source_version"],
+            "sourceRevision": morph.dictionary.meta["source_revision"], "corpusRevision": morph.dictionary.meta["corpus_revision"],
+            "license": "CC BY-SA 3.0"}
+
+
+def generator_code_hash():
+    directory = Path(__file__).parent
+    return fingerprint({name: hashlib.sha256((directory / name).read_bytes()).hexdigest()
+                        for name in ("build_annotations.py", "annotation_expansion.py", "extract_vocab.py")})
+
+
+def classify_fields(fields):
+    kind = fields["entryType"]["value"]
+    if kind in {"phrase", "sentence"}:
+        return kind, [kind]
+    inverse = {label: category for category, label in POS.values()}
+    value = fields["partOfSpeech"]["value"]
+    labels = value if isinstance(value, list) else []
+    categories = sorted({inverse[label] for label in labels if isinstance(label, str) and label in inverse}) or ["unknown"]
+    return categories[0] if len(categories) == 1 else "ambiguous", categories
+
+
+def report_coverage(annotations, entries, metadata=None):
+    fields = list(REQUIRED_FIELDS)
     def summarize(keys):
         result = {}
+        keys = list(keys)
         for name in fields:
-            statuses = Counter(annotations[key][name]["status"] for key in keys if name in annotations[key])
-            applicable = sum(statuses.values()) - statuses["not-applicable"]
-            result[name] = {"applicableCount": applicable, "statusCounts": dict(statuses), "sourceRate": statuses["source"] / applicable if applicable else None, "generatedCandidateRate": statuses["generated"] / applicable if applicable else None, "humanReviewedRate": statuses["reviewed"] / applicable if applicable else None}
+            statuses = Counter(annotations[key][name]["status"] for key in keys)
+            applicable = len(keys) - statuses["not-applicable"]
+            result[name] = {"itemCount": len(keys), "applicableCount": applicable, "statusCounts": dict(statuses),
+                            "sourceRate": statuses["source"] / applicable if applicable else None,
+                            "generatedCandidateRate": statuses["generated"] / applicable if applicable else None,
+                            "unknownRate": statuses["unknown"] / applicable if applicable else None,
+                            "humanReviewedRate": statuses["reviewed"] / applicable if applicable else None}
         return result
-    by_book, by_lesson, by_category = defaultdict(list), defaultdict(list), defaultdict(list)
+    by_book, by_lesson, by_category, by_pos = defaultdict(list), defaultdict(list), defaultdict(list), defaultdict(list)
     source_per_book = Counter(str(entry["book"]) for entry in entries.values())
     source_per_lesson = Counter(f"{entry['book']}-{lesson}" for entry in entries.values() for lesson in entry["lessons"])
     for key in source_per_book:
         by_book[key] = []
     for key in source_per_lesson:
         by_lesson[key] = []
-    categories = {key: category for key, category, _ in SELECTION}
-    for key in annotations:
+    for key, content in annotations.items():
+        category, parts = (metadata[key]["category"], metadata[key]["partsOfSpeech"]) if metadata else classify_fields(content)
         by_book[str(entries[key]["book"])].append(key)
         for lesson in entries[key]["lessons"]:
             by_lesson[f"{entries[key]['book']}-{lesson}"].append(key)
-        by_category[categories[key]].append(key)
-    return {"schemaVersion": 1, "fieldRateScope": "representative-selected-items-only", "representativeCount": len(annotations), "totalSourceEntryCount": len(entries), "notAnnotatedSourceCount": len(entries) - len(annotations), "annotatedSourceFraction": len(annotations) / len(entries), "allApplicableFieldsAudited": False, "humanReviewEvents": 0, "perField": summarize(annotations), "perBook": {key: {"itemCount": len(value), "sourceEntryCount": source_per_book[key], "annotatedFraction": len(value) / source_per_book[key], "perField": summarize(value)} for key, value in sorted(by_book.items())}, "perLesson": {key: {"itemCount": len(value), "sourceEntryCount": source_per_lesson[key], "annotatedFraction": len(value) / source_per_lesson[key], "perField": summarize(value)} for key, value in sorted(by_lesson.items())}, "perCategory": {key: {"itemCount": len(value), "perField": summarize(value)} for key, value in sorted(by_category.items())}, "limitations": ["50 representative items demonstrate fields, not full-corpus annotation completion.", "Dictionary parses lack contextual sense disambiguation and reliable stress; computed forms are candidates.", "Textbook translations remain source-backed; teaching examples/explanations authored here are generated drafts.", "No etymological/synonym relationship inferred from prefixes or similar spelling.", "No API calls or human-review events performed."]}
+        by_category[category].append(key)
+        for part in parts:
+            by_pos[part].append(key)
+    selected = [key for key, _, _ in SELECTION if key in annotations]
+    return {"schemaVersion": 2, "fieldRateScope": "all-source-items; applicable denominators exclude not-applicable",
+            "annotatedItemCount": len(annotations), "representativeCount": len(selected),
+            "totalSourceEntryCount": len(entries), "notAnnotatedSourceCount": len(entries) - len(annotations),
+            "annotatedSourceFraction": len(annotations) / len(entries) if entries else 0,
+            "allApplicableFieldsAudited": False, "humanReviewEvents": 0, "perField": summarize(annotations),
+            "perBook": {key: {"itemCount": len(value), "sourceEntryCount": source_per_book[key], "annotatedFraction": len(value) / source_per_book[key], "perField": summarize(value)} for key, value in sorted(by_book.items())},
+            "perLesson": {key: {"itemCount": len(value), "sourceEntryCount": source_per_lesson[key], "annotatedFraction": len(value) / source_per_lesson[key], "perField": summarize(value)} for key, value in sorted(by_lesson.items())},
+            "perCategory": {key: {"itemCount": len(value), "perField": summarize(value)} for key, value in sorted(by_category.items())},
+            "perPartOfSpeech": {key: {"itemCount": len(value), "perField": summarize(value)} for key, value in sorted(by_pos.items())},
+            "partOfSpeechDenominatorNote": "A genuinely ambiguous item may appear under more than one POS; perCategory is mutually exclusive.",
+            "representativeFieldCoverage": summarize(selected),
+            "limitations": ["Every item has field statuses, not every field has known or reviewed content.",
+                            "Known dictionary parses are isolated-form candidates, without contextual sense disambiguation or reliable stress.",
+                            "Source Chinese meanings remain source evidence; 35 missing meanings remain unknown.",
+                            "Only the existing 39 teaching example drafts and 15 explanation drafts are retained; no invented new example corpus.",
+                            "No relationship inferred from prefixes, slash order or similar spelling; source co-listings are preserved as source statements.",
+                            "No AI API calls or human-review events performed."]}
+
+
+def build_corpus(workbook, previous, prior_manifest, morph):
+    reject_reviewed_input(previous)
+    entries = {entry["sourceKey"]: entry for entry in workbook["entries"]}
+    if len(entries) != len(workbook["entries"]):
+        raise ValueError("Duplicate source keys in workbook artifact")
+    issues = defaultdict(list)
+    for issue in workbook["report"]["issues"]:
+        issues[issue["sourceKey"]].append(issue)
+    dictionary = dictionary_identity(morph)
+    code_hash = generator_code_hash()
+    annotator = CorpusAnnotator(morph, annotate, SELECTION, VERSION, MORPH_SOURCE)
+    annotations, metadata = {}, {}
+    cached = 0
+    now = datetime.now(timezone.utc).isoformat()
+    for key, entry in entries.items():
+        row_hash = fingerprint(entry)
+        input_hash = fingerprint({"sourceRowFingerprint": row_hash, "issues": issues[key], "generatorVersion": VERSION,
+                                  "generatorCodeSha256": code_hash, "dictionary": dictionary})
+        before = previous.get(key)
+        old_meta = prior_manifest.get("entries", {}).get(key, {})
+        if before and old_meta.get("inputFingerprint") == input_hash and old_meta.get("sourceRowFingerprint") == row_hash and old_meta.get("outputFingerprint") == fingerprint(before):
+            annotations[key], metadata[key] = before, old_meta
+            cached += 1
+            continue
+        content, analysis = annotator.annotate(entry, issues[key], workbook["workbook"]["sha256"])
+        for name, value in content.items():
+            old = before.get(name) if before else None
+            comparable = {k: v for k, v in old.items() if k != "updatedAt"} if old else None
+            value["updatedAt"] = old["updatedAt"] if comparable == value and old.get("updatedAt") else now
+        annotations[key] = content
+        metadata[key] = {"sourceRowFingerprint": row_hash, "inputFingerprint": input_hash,
+                         "outputFingerprint": fingerprint(content), "category": analysis["category"],
+                         "partsOfSpeech": analysis["partsOfSpeech"], "evidenceWorkbookSha256": workbook["workbook"]["sha256"]}
+    validate(annotations, entries)
+    manifest = {"schemaVersion": 2, "generatorVersion": VERSION, "generatorCodeSha256": code_hash,
+                "fingerprintAlgorithm": "sha256/canonical-json-utf8/sorted-keys/no-whitespace/ensure_ascii=false",
+                "dictionary": dictionary, "sourceWorkbookSha256": workbook["workbook"]["sha256"], "entries": metadata}
+    coverage = report_coverage(annotations, entries, metadata)
+    coverage["generator"] = {"version": VERSION, "codeSha256": code_hash, "dictionary": dictionary,
+                             "sourceWorkbookSha256": workbook["workbook"]["sha256"]}
+    return annotations, manifest, coverage, {"cacheHits": cached, "generatedItems": len(entries) - cached}
 
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--workbook", type=Path, default=Path("data/processed/workbook.json"))
     parser.add_argument("--output", type=Path, default=Path("data/processed/annotations.json"))
+    parser.add_argument("--manifest", type=Path)
     parser.add_argument("--report", type=Path, default=Path("artifacts/import/content-coverage.json"))
     args = parser.parse_args()
-    import pymorphy3
-    morph = pymorphy3.MorphAnalyzer(lang="ru")
+    manifest_path = args.manifest or args.output.with_name(args.output.stem + ".manifest.json")
     workbook = json.loads(args.workbook.read_text())
-    entries = {entry["sourceKey"]: entry for entry in workbook["entries"]}
-    issues = defaultdict(list)
-    for issue in workbook["report"]["issues"]:
-        issues[issue["sourceKey"]].append(issue)
-    annotations = {key: annotate(entries[key], category, components, morph, issues[key], workbook["workbook"]["sha256"]) for key, category, components in SELECTION}
-    validate(annotations, entries)
     previous = json.loads(args.output.read_text()) if args.output.exists() else {}
     reject_reviewed_input(previous)
-    now = datetime.now(timezone.utc).isoformat()
-    for key, fields in annotations.items():
-        for name, value in fields.items():
-            old = previous.get(key, {}).get(name)
-            comparable_old = {k: v for k, v in old.items() if k != "updatedAt"} if old else None
-            value["updatedAt"] = old["updatedAt"] if comparable_old == value and old.get("updatedAt") else now
+    prior_manifest = json.loads(manifest_path.read_text()) if manifest_path.exists() else {}
+    import pymorphy3
+    morph = pymorphy3.MorphAnalyzer(lang="ru")
+    annotations, manifest, coverage, counts = build_corpus(workbook, previous, prior_manifest, morph)
     write_if_different(args.output, json_bytes(annotations))
-    coverage = report_coverage(annotations, entries)
-    coverage["generator"] = {"version": VERSION, "pymorphy3": importlib.metadata.version("pymorphy3"), "dictionaryPackage": importlib.metadata.version("pymorphy3-dicts-ru"), "dictionaryMeta": morph.dictionary.meta, "sourceWorkbookSha256": workbook["workbook"]["sha256"]}
+    write_if_different(manifest_path, json_bytes(manifest))
     write_if_different(args.report, json_bytes(coverage))
-    print(json.dumps({"representativeCount": len(annotations), "categoryCounts": {key: value["itemCount"] for key, value in coverage["perCategory"].items()}, "humanReviewEvents": 0, "output": str(args.output)}, ensure_ascii=False))
+    print(json.dumps({"annotatedItemCount": len(annotations), "representativeCount": coverage["representativeCount"],
+                      "categoryCounts": {key: value["itemCount"] for key, value in coverage["perCategory"].items()},
+                      "humanReviewEvents": 0, "output": str(args.output), "manifest": str(manifest_path), **counts}, ensure_ascii=False))
 
 
 if __name__ == "__main__":

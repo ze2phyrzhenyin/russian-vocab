@@ -8,6 +8,7 @@ import {localDateKey,studyStreak,cardId,isMistake} from '@/domain/learning';
 import {HttpError,readJson,requireUser,requireMutationOrigin} from './http';
 import {accessibleItems,getItem,itemDTO,itemInclude,searchKey,stateDTOs} from './items';
 import {reviewSchema,submitReviews} from './reviews';
+import {getContentCoverage,listContentItems,getContentItem,listContentJobs,getContentJob,createContentJob,runContentBatch,cancelContentJob,retryContentJob,reviewAnnotation,rollbackAnnotation} from './content-workflow';
 
 const personalSchema=z.object({russian:z.string().trim().min(1).max(1000),chinese:z.string().trim().max(2000),kind:z.enum(['word','phrase','sentence']),notes:z.string().max(4000).optional(),example:z.string().max(4000).optional(),tags:z.array(z.string().max(50)).max(20).optional()});
 const asJson=(value:unknown)=>value as Prisma.InputJsonValue;
@@ -145,6 +146,23 @@ export async function handleApi(request:Request,parts:string[]):Promise<Response
   }
   if(parts[0]==='admin'){
     if(user.role!=='admin')throw new HttpError(403,'只有内容管理员可以进行此操作。');
+    if(parts[1]==='content'){
+      if(route==='admin/content/coverage'&&method==='GET')return Response.json(await getContentCoverage(user.id));
+      if(route==='admin/content/items'&&method==='GET')return Response.json(await listContentItems(user.id,Object.fromEntries(url.searchParams)));
+      if(parts[2]==='items'&&parts[3]&&parts.length===4&&method==='GET')return Response.json(await getContentItem(user.id,parts[3],url.searchParams.get('field')??undefined));
+      if(route==='admin/content/jobs'&&method==='GET')return Response.json(await listContentJobs(user.id));
+      if(route==='admin/content/jobs'&&method==='POST')return Response.json(await createContentJob(user.id,await readJson(request)),{status:201});
+      if(parts[2]==='jobs'&&parts[3]){
+        if(parts.length===4&&method==='GET')return Response.json(await getContentJob(user.id,parts[3]));
+        if(parts.length===5&&method==='POST'){
+          if(parts[4]==='run-batch'){const body=z.object({limit:z.number().int().min(1).max(50).optional()}).strict().parse(await readJson(request));return Response.json(await runContentBatch(user.id,parts[3],body.limit??25))}
+          if(parts[4]==='cancel')return Response.json(await cancelContentJob(user.id,parts[3]));
+          if(parts[4]==='retry')return Response.json(await retryContentJob(user.id,parts[3]));
+        }
+      }
+      if(parts[2]==='items'&&parts[3]&&parts[4]==='fields'&&parts[5]&&parts[6]==='review'&&parts.length===7&&method==='POST')return Response.json(await reviewAnnotation(user.id,parts[3],parts[5],await readJson(request)));
+      if(parts[2]==='revisions'&&parts[3]&&parts[4]==='rollback'&&parts.length===5&&method==='POST')return Response.json(await rollbackAnnotation(user.id,parts[3],await readJson(request)));
+    }
     if(route==='admin/issues'&&method==='GET'){
       const latest=await db.workbookImport.findFirst({orderBy:{importedAt:'desc'}});
       const issues=await db.learningItem.findMany({where:{OR:[{missingMeaning:true},{disputed:true}],ownerId:null},include:itemInclude});

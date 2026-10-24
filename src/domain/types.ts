@@ -3,7 +3,7 @@ export type RatingName = 'again' | 'hard' | 'good' | 'easy';
 export type ItemKind = 'word' | 'phrase' | 'sentence';
 export interface EvidenceField {
   value: unknown;
-  status: 'source' | 'generated' | 'reviewed' | 'unknown' | 'disputed' | 'not-applicable';
+  status: 'source' | 'generated' | 'reviewed' | 'unknown' | 'disputed' | 'not-applicable' | 'rejected';
   source?: string;
   method?: string;
   version?: string;

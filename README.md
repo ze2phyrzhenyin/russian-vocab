@@ -1,8 +1,10 @@
 # 俄语拾词 / Slovo
 
-面向中文母语学习者的手机优先俄语背词网页应用，由 Codex 实现。当前工作簿完整导入：6 册、69 课、4,835 源条目、4,838 归课关联、108 原图。50 条代表注解用于验证详情功能，生成候选和缺项均明确标记，人工核验数为 0。
+面向中文母语学习者的手机优先俄语背词网页应用，由 Codex 实现。当前工作簿完整导入：6 册、69 课、4,835 源条目、4,838 归课关联、108 原图。全库 4,835 项均已进入可追溯注解流程，每项 32 个字段；字典候选、来源、缺项与争议分别记录。自动生成不会产生人工审核事实。
 
-支持真实账号、跨册选课、双向选择与翻卡、错词再练、FSRS 复习、个人集合、手动批量录入、真实本地 OCR、原图追溯、下载课次、离线 outbox 和管理员修订。验证状态以 [STATUS.md](STATUS.md) 为准，完整注解与正式发布见 [PLANS.md](PLANS.md)。
+支持真实账号、跨册选课、双向选择与翻卡、错词再练、FSRS 复习、个人集合、手动批量录入、真实本地 OCR、原图追溯、下载课次、离线 outbox 和管理员修订。新增持久批量注解任务、按册/课/词性覆盖报告、逐字段确认/驳回和带审计的历史回滚。验证状态以 [STATUS.md](STATUS.md) 为准。
+
+正式入口：<https://slovo.zhaoyang.fr>。私有代码仓库：<https://github.com/ze2phyrzhenyin/russian-vocab>。公网版使用独立正式数据库，关闭固定演示入口；请注册个人账号或使用私下交付的体验账号。部署说明见 [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)。
 
 ## 安装与启动
 
@@ -29,7 +31,7 @@ dev-run docker compose -p slovo-demo build app
 docker compose -p slovo-demo up -d --no-build app
 ```
 
-应用仅绑定 `127.0.0.1:4186`，数据库仅绑定 `127.0.0.1:55486`。Compose 是隔离演示配置；没有公开域名或共享访客沙盒。不要在同一端口同时运行 dev 和 Compose app。
+应用仅绑定 `127.0.0.1:4186`，数据库仅绑定 `127.0.0.1:55486`。这个 Compose 文件是隔离演示配置；正式环境另用 `compose.production.yaml`。不要在同一端口同时运行 dev 和 Compose app。
 
 rex-cli 路径为 `/home/adminlinux/Developer/russian-vocab`。该主机使用项目专属限额 builder：
 
@@ -45,7 +47,7 @@ docker compose -p slovo-demo up -d --no-build app
 ssh -N -L 4187:127.0.0.1:4186 rex-cli
 ```
 
-## 账号与体验
+## 本地演示账号与体验
 
 | 账号 | 密码 | 用途 |
 | --- | --- | --- |
@@ -63,6 +65,8 @@ dev-run pnpm verify:import      # 重导入，核对数据、修订和 demo 进�
 dev-run pnpm start              # 手动启动已构建服务
 dev-run pnpm test:e2e           # 自动启动/复用本地构建服务；A → B → C → 兼容性
 dev-run pnpm content:report
+dev-run pnpm content:import     # 使用现有管理员身份，持久任务与逐字段生成审计
+dev-run pnpm content:jobs list --actor-email admin@ruslearn.test
 dev-run pnpm import:vocab -- --file data/source/东方俄语词汇汇总_第1至6册.xlsx
 ```
 

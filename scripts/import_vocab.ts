@@ -47,7 +47,16 @@ export async function importBundle(file='data/processed/workbook.json'){
     const newItems=bundle.entries.filter(e=>!itemMap.has(identities.get(e.sourceKey)!)).map(row=>({id:randomUUID(),sourceEntryId:identities.get(row.sourceKey)!,...fields(row)}));
     await chunks(newItems,data=>tx.learningItem.createMany({data}));
     let preservedRevisions=0;
-    for(const row of changed){const item=itemMap.get(identities.get(row.sourceKey)!);if(!item)continue;if(item._count.revisions){preservedRevisions++;continue}await tx.learningItem.update({where:{id:item.id},data:{...fields(row),contentVersion:{increment:1}}})}
+    for(const row of changed){
+      const previousItem=itemMap.get(identities.get(row.sourceKey)!);if(!previousItem)continue;
+      // Serialize with annotation review and re-read after acquiring the lock.
+      await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${previousItem.id}))`;
+      const item=await tx.learningItem.findUniqueOrThrow({where:{id:previousItem.id},include:{_count:{select:{revisions:true}}}});
+      if(item._count.revisions){preservedRevisions++;continue}
+      const entryType=(item.annotations as unknown as {entryType?:{status?:string}}|null)?.entryType;
+      const protectKind=entryType?.status==='reviewed'||entryType?.status==='rejected';
+      await tx.learningItem.update({where:{id:item.id},data:{...fields(row),...(protectKind?{kind:item.kind}:{}),contentVersion:{increment:1}}});
+    }
     await chunks(newItems.flatMap(item=>['ru-zh','zh-ru','recall'].map(direction=>({id:`${item.id}:${direction}`,itemId:item.id,direction}))),data=>tx.learningCard.createMany({data,skipDuplicates:true}));
     return {status:'imported',hash:bundle.workbook.sha256,sourceEntries:await tx.sourceEntry.count(),lessonAssociations:await tx.sourceEntryLesson.count(),sourceAssets:await tx.sourceAsset.count(),learningItems:await tx.learningItem.count({where:{ownerId:null}}),cards:await tx.learningCard.count(),added:added.length,changed:changed.length,preservedRevisions,preservedLearningHistory:true};
   },{timeout:120000});
